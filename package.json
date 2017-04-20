@@ -1,0 +1,23 @@
+{
+  "name": "oxygendecl-express",
+  "version": "0.1.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/losfair/OxygenDecl-Express.git"
+  },
+  "author": "Heyang Zhou",
+  "license": "LGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/losfair/OxygenDecl-Express/issues"
+  },
+  "homepage": "https://github.com/losfair/OxygenDecl-Express#readme",
+  "dependencies": {
+    "express": "^4.15.2",
+    "oxygendecl": "^0.1.0"
+  }
+}
