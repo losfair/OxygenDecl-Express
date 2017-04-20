@@ -29,14 +29,16 @@ exports.Router = function Router(config) {
         }
 
         if(!(node.resource instanceof od.parser.Resource)) {
-            throw new Error("handle_resource: Invalid resource");
+            //throw new Error("handle_resource: Invalid resource");
+            return null;
         }
 
         switch(node.resource.type) {
             case "Provider": {
                 const fn = this.providers.get(node.resource.name);
                 if(!fn) {
-                    throw new Error("handle_resource: Provider not found: " + node.resource.name);
+                    //throw new Error("handle_resource: Provider not found: " + node.resource.name);
+                    return null;
                 }
                 return fn;
             }
@@ -76,6 +78,10 @@ exports.Router = function Router(config) {
 
         if(!handler) {
             handler = this.get_resource_handler(current);
+        }
+
+        if(!handler) {
+            return next();
         }
 
         return handler(req, resp);

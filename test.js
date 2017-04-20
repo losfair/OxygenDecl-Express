@@ -13,5 +13,8 @@ app.use(router.as_middleware);
 router.register_provider("hello_world_provider", (req, resp) => {
     return resp.send("Hello world");
 });
+router.register_provider("test_dir_provider", (req, resp) => {
+    return resp.send(req.url);
+});
 
 app.listen(8323);
