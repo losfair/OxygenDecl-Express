@@ -1,89 +1,59 @@
 const od = require("oxygendecl");
+const express = require("express");
 
 exports.Router = function Router(config) {
     if(!(this instanceof Router)) {
         return new Router(...arguments);
     }
 
-    this.root = null;
-    this.providers = new Map();
-
-    if(config instanceof od.parser.ASTNode) {
-        this.root = config;
-    } else if(typeof(config) == "string") {
-        this.root = od.parser.parse(config);
-    } else {
-        throw new TypeError("Invalid type for router config");
-    }
-
-    this.register_provider = (name, fn) => {
-        if(typeof(name) != "string" || typeof(fn) != "function") {
-            throw new TypeError("register_provider: Invalid types for arguments");
-        }
-        this.providers.set(name, fn);
-    };
-
-    this.get_resource_handler = node => {
-        if(!(node instanceof od.parser.ASTNode)) {
-            throw new TypeError("handle_resource: Invalid type for node");
-        }
-
-        if(!(node.resource instanceof od.parser.Resource)) {
-            //throw new Error("handle_resource: Invalid resource");
-            return null;
-        }
-
-        switch(node.resource.type) {
-            case "Provider": {
-                const fn = this.providers.get(node.resource.name);
-                if(!fn) {
-                    //throw new Error("handle_resource: Provider not found: " + node.resource.name);
-                    return null;
-                }
-                return fn;
-            }
-            //break;
-
-            default:
-            throw new TypeError("handle_resource: Unknown resource type: " + node.resource.type);
-        }
-    };
+    this._router = new od.router.Router(config);
+    this.register_provider = (name, fn) => this._router.register_provider(name, fn);
+    this.register_middleware = (name, fn) => this._router.register_middleware(name, fn);
 
     this.as_middleware = (req, resp, next) => {
-        let current = this.root;
-        let url = req.url;
-
-        let handler = null;
-
-        while(url.length) {
-            let found = false;
-            for(const c of current.children) {
-                if(url.startsWith(c.name)) {
-                    current = c;
-                    url = url.substring(c.name.length);
-                    found = true;
-                    break;
-                }
+        try {
+            this._router.dispatch(req.url.split("#")[0].split("?")[0], {
+                request: req,
+                response: resp
+            }).then(ret => {}).catch(e => resp.send("" + e));
+        } catch(e) {
+            if(e instanceof od.router.RouterError) {
+                return next();
             }
-
-            if(!found) {
-                if(current.name.endsWith("/")) {
-                    handler = this.get_resource_handler(current);
-                    break;
-                } else {
-                    return next();
-                }
-            }
+            return resp.send("" + e);
         }
-
-        if(!handler) {
-            handler = this.get_resource_handler(current);
-        }
-
-        if(!handler) {
-            return next();
-        }
-
-        return handler(req, resp);
     };
 }
+
+exports.Application = function Application({ config, providers, middlewares, listen_options }) {
+    if(!(this instanceof Application)) {
+        return new Application(...arguments);
+    }
+
+    this.router = new exports.Router(config);
+    this.app = express();
+    this.app.use(this.router.as_middleware);
+    this.listen = function() {
+        return this.app.listen(...arguments);
+    };
+
+    if(providers && typeof(providers) == "object") {
+        for(const k in providers) {
+            this.router.register_provider(k, providers[k]);
+        }
+    }
+
+    if(middlewares && typeof(middlewares) == "object") {
+        for(const k in middlewares) {
+            this.router.register_middleware(k, middlewares[k]);
+        }
+    }
+
+    if(listen_options) {
+        if(listen_options instanceof Array) {
+            this.app.listen(...listen_options);
+        } else {
+            throw new TypeError("Invalid type for listen_options");
+        }
+    }
+};

@@ -18,6 +18,6 @@
   "homepage": "https://github.com/losfair/OxygenDecl-Express#readme",
   "dependencies": {
     "express": "^4.15.2",
-    "oxygendecl": "^0.1.0"
+    "oxygendecl": "^0.1.5"
   }
 }
