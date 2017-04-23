@@ -4,6 +4,8 @@ const config = `
 / => (log_to_console) {
     hello_world => Provider(hello_world_provider)
     test_dir/ => Provider(test_dir_provider)
+    test_message => Message(Test message)
+    404 => Error(404)
     delayed/ => (delay_one_second) (print_hello_world) {
         hello_world => Provider(hello_world_provider)
         throw_error => (throw_error) Provider(hello_world_provider)
@@ -24,6 +26,9 @@ const app = new lib.Application({
         throw_error: ctx => {
             throw new Error("Test error");
         }
+    },
+    resource_handlers: {
+        Message: (msg, ctx) => ctx.response.send(msg)
     },
     listen_options: [ 8323 ]
 });

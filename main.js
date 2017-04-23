@@ -1,12 +1,19 @@
 const od = require("oxygendecl");
 const express = require("express");
 
+const HTTP_ERROR_MESSAGES = {
+    "403": "Forbidden",
+    "404": "Not Found",
+    "500": "Internal Server Error"
+};
+
 exports.Router = function Router(config) {
     if(!(this instanceof Router)) {
         return new Router(...arguments);
     }
 
     this._router = new od.router.Router(config);
+    this.register_resource_handler = (name, fn) => this._router.register_resource_handler(name, fn);
     this.register_provider = (name, fn) => this._router.register_provider(name, fn);
     this.register_middleware = (name, fn) => this._router.register_middleware(name, fn);
 
@@ -25,7 +32,7 @@ exports.Router = function Router(config) {
     };
 }
 
-exports.Application = function Application({ config, providers, middlewares, listen_options }) {
+exports.Application = function Application({ config, providers, middlewares, resource_handlers, listen_options }) {
     if(!(this instanceof Application)) {
         return new Application(...arguments);
     }
@@ -37,6 +44,12 @@ exports.Application = function Application({ config, providers, middlewares, lis
         return this.app.listen(...arguments);
     };
 
+    this.router.register_resource_handler("Error", (code, ctx) => {
+        ctx.response.status(parseInt(code));
+        msg = HTTP_ERROR_MESSAGES[code] || ("Error " + code);
+        return ctx.response.send(msg);
+    });
+
     if(providers && typeof(providers) == "object") {
         for(const k in providers) {
             this.router.register_provider(k, providers[k]);
@@ -46,6 +59,12 @@ exports.Application = function Application({ config, providers, middlewares, lis
     if(middlewares && typeof(middlewares) == "object") {
         for(const k in middlewares) {
             this.router.register_middleware(k, middlewares[k]);
+        }
+    }
+
+    if(resource_handlers && typeof(resource_handlers) == "object") {
+        for(const k in resource_handlers) {
+            this.router.register_resource_handler(k, resource_handlers[k]);
         }
     }
 
