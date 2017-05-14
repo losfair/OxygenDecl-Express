@@ -10,8 +10,11 @@ const config = `
         hello_world => Provider(hello_world_provider)
         throw_error => (throw_error) Provider(hello_world_provider)
     }
+    test_template => (counter_add_one) Template(test_template)
 }
 `;
+
+let counter = 1;
 
 const app = new lib.Application({
     config: config,
@@ -25,6 +28,11 @@ const app = new lib.Application({
         print_hello_world: ctx => console.log("Hello world"),
         throw_error: ctx => {
             throw new Error("Test error");
+        },
+        counter_add_one: ctx => {
+            ctx.params = {
+                counter: (counter++).toString()
+            };
         }
     },
     resource_handlers: {

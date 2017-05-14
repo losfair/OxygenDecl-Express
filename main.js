@@ -1,6 +1,10 @@
 const od = require("oxygendecl");
 const express = require("express");
 
+const BUILTIN_RESOURCE_HANDLERS = {
+    Template: require("./template.js")
+};
+
 const HTTP_ERROR_MESSAGES = {
     "403": "Forbidden",
     "404": "Not Found",
@@ -60,6 +64,10 @@ exports.Application = function Application({ config, providers, middlewares, res
         for(const k in middlewares) {
             this.router.register_middleware(k, middlewares[k]);
         }
+    }
+
+    for(const k in BUILTIN_RESOURCE_HANDLERS) {
+        this.router.register_resource_handler(k, BUILTIN_RESOURCE_HANDLERS[k]);
     }
 
     if(resource_handlers && typeof(resource_handlers) == "object") {
